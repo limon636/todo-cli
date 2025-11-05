@@ -1,0 +1,17 @@
+[
+  {
+    "id": 1,
+    "text": "It is over to learn Rust",
+    "done": true
+  },
+  {
+    "id": 2,
+    "text": "Call to mother",
+    "done": false
+  },
+  {
+    "id": 3,
+    "text": "How are you?",
+    "done": false
+  }
+]
