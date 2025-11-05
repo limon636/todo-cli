@@ -10,6 +10,8 @@ struct Task {
     id: u32,
     text: String,
     done: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    due_date: Option<String>,
 }
 
 // CLI আর্গুমেন্ট
@@ -31,6 +33,14 @@ enum Commands {
     Done { id: u32 },
     /// টাস্ক মুছে ফেলো
     Delete { id: u32 },
+    /// টাস্ক এডিট করো
+    Edit { id: u32, text: String },
+    /// টাস্কের ডিউ ডেট সেট করো
+    Due { id: u32, date: String },
+    /// GitHub Gist-এ সিঙ্ক করো
+    Sync,
+    /// পার্টি করো!
+    Party,
 }
 
 fn main() {
@@ -41,6 +51,10 @@ fn main() {
         Commands::List => list_tasks(),
         Commands::Done { id } => toggle_task(id),
         Commands::Delete { id } => delete_task(id),
+        Commands::Edit { id, text } => edit_task(id, text),
+        Commands::Due { id, date } => set_due_date(id, date),
+        Commands::Sync => sync_tasks(),
+        Commands::Party => party(),
     }
 }
 
@@ -65,9 +79,9 @@ fn save_tasks(tasks: &[Task]) {
 fn add_task(text: String) {
     let mut tasks = load_tasks();
     let id = tasks.iter().map(|t| t.id).max().unwrap_or(0) + 1;
-    tasks.push(Task { id, text, done: false });
+    tasks.push(Task { id, text, done: false, due_date: None });
     save_tasks(&tasks);
-    println!("{} {}", "✅ যোগ হয়েছে!".green(), id.to_string().cyan());
+    println!("{} {}", "✅ যোগ হয়েছে!".green(), id.to_string().cyan());
 }
 
 // সব দেখাও
@@ -81,7 +95,11 @@ fn list_tasks() {
     println!("{}", "📋 তোমার টাস্ক লিস্ট:".blue().bold());
     for task in tasks {
         let status = if task.done { "✅" } else { "⬜" };
-        let line = format!("{} [{}] {}", task.id, status, task.text);
+        let due_info = match &task.due_date {
+            Some(date) => format!(" 📅 {}", date.yellow()),
+            None => String::new(),
+        };
+        let line = format!("{} [{}] {}{}", task.id, status, task.text, due_info);
         if task.done {
             println!("{}", line.strikethrough().dimmed());
         } else {
@@ -125,4 +143,82 @@ fn delete_task(id: u32) {
     } else {
         println!("{} টাস্ক {} পাওয়া যায়নি!", "❌".red(), id);
     }
+}
+// টাস্ক এডিট করো
+fn edit_task(id: u32, new_text: String) {
+    let mut tasks = load_tasks();
+    let mut found = false;
+
+    for task in &mut tasks {
+        if task.id == id {
+            task.text = new_text.clone();
+            found = true;
+            break;
+        }
+    }
+
+    if found {
+        save_tasks(&tasks);
+        println!("{} টাস্ক {} আপডেট হয়েছে!", "✏️".green(), id);
+    } else {
+        println!("{} টাস্ক {} পাওয়া যায়নি!", "❌".red(), id);
+    }
+}
+
+// ডিউ ডেট সেট করো
+fn set_due_date(id: u32, date: String) {
+    let mut tasks = load_tasks();
+    let mut found = false;
+
+    for task in &mut tasks {
+        if task.id == id {
+            task.due_date = Some(date.clone());
+            found = true;
+            break;
+        }
+    }
+
+    if found {
+        save_tasks(&tasks);
+        println!("{} টাস্ক {} এর ডিউ ডেট সেট হয়েছে: {}", "📅".green(), id, date.yellow());
+    } else {
+        println!("{} টাস্ক {} পাওয়া যায়নি!", "❌".red(), id);
+    }
+}
+
+// GitHub Gist-এ সিঙ্ক করো
+fn sync_tasks() {
+    let tasks = load_tasks();
+    let json = serde_json::to_string_pretty(&tasks).unwrap();
+    
+    println!("{}", "🔄 সিঙ্ক করা হচ্ছে...".cyan());
+    println!("{}", "ℹ️  GitHub Gist সিঙ্ক ফিচার আসছে শীঘ্রই!".yellow());
+    println!("{}", "📋 বর্তমান টাস্ক ডেটা:".blue());
+    println!("{}", json.dimmed());
+    println!("\n{}", "💡 টিপস: আপাতত তুমি ম্যানুয়ালি todos.json ফাইলটি Gist-এ আপলোড করতে পারো!".green());
+}
+
+// পার্টি করো!
+fn party() {
+    let confetti = vec!["🎉", "🎊", "🥳", "🎈", "🎆", "✨", "🌟", "💫", "��", "🎁"];
+    println!("\n{}", "🎉 পার্টি টাইম! ��".green().bold());
+    
+    for _ in 0..3 {
+        print!("   ");
+        for _ in 0..20 {
+            let emoji = confetti[rand() % confetti.len()];
+            print!("{} ", emoji);
+        }
+        println!();
+    }
+    
+    println!("\n{}", "  🎊 অসাধারণ কাজ! তুমি দারুণ! 🎊".cyan().bold());
+    println!("{}", "  ✨ সব টাস্ক শেষ! এবার আরাম করো! ✨\n".yellow().bold());
+}
+
+// সিম্পল র্যান্ডম ফাংশন
+fn rand() -> usize {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+    (now.as_nanos() % 10) as usize
 }

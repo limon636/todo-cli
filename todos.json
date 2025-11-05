@@ -13,5 +13,11 @@
     "id": 3,
     "text": "How are you?",
     "done": false
+  },
+  {
+    "id": 4,
+    "text": "নতুন টেক্সট - Rust শিখছি",
+    "done": false,
+    "due_date": "2025-12-31"
   }
 ]
