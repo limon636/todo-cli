@@ -1,25 +1,87 @@
 use colored::*;
-use crate::task::{load_tasks, save_tasks, Task};
+use crate::task::{load_tasks, save_tasks, Task, get_data_location, get_today, get_date_with_offset};
 
 // Add new task
-pub fn add_task(text: String) {
+pub fn add_task(text: String, days_offset: i32) {
     let mut tasks = load_tasks();
     let id = tasks.iter().map(|t| t.id).max().unwrap_or(0) + 1;
-    tasks.push(Task { id, text, done: false, due_date: None });
+    let due_date = get_date_with_offset(days_offset);
+    
+    tasks.push(Task { 
+        id, 
+        text: text.clone(), 
+        done: false, 
+        due_date: Some(due_date.clone()) 
+    });
+    
     save_tasks(&tasks);
-    println!("{} {}", "✅ Added!".green(), id.to_string().cyan());
+    
+    let date_info = if days_offset == 0 {
+        format!(" (due today: {})", due_date.yellow())
+    } else if days_offset == 1 {
+        format!(" (due tomorrow: {})", due_date.yellow())
+    } else if days_offset > 0 {
+        format!(" (due in {} days: {})", days_offset, due_date.yellow())
+    } else if days_offset == -1 {
+        format!(" (due yesterday: {})", due_date.yellow())
+    } else {
+        format!(" (due {} days ago: {})", days_offset.abs(), due_date.yellow())
+    };
+    
+    println!("{} {}{}", "✅ Added!".green(), id.to_string().cyan(), date_info);
 }
 
 // Show all tasks
-pub fn list_tasks() {
+pub fn list_tasks(show_all: bool, today_only: bool) {
     let tasks = load_tasks();
     if tasks.is_empty() {
         println!("{}", "📭 No tasks! Add some tasks.".yellow());
         return;
     }
 
-    println!("{}", "📋 Your Task List:".blue().bold());
-    for task in tasks {
+    let today = get_today();
+
+    // Filter tasks based on parameters
+    let mut filtered_tasks: Vec<&Task> = if today_only {
+        // Show today's tasks (with due_date = today)
+        tasks.iter()
+            .filter(|task| task.due_date.as_ref() == Some(&today))
+            .collect()
+    } else if show_all {
+        // Show all tasks
+        tasks.iter().collect()
+    } else {
+        // Show only pending tasks
+        tasks.iter().filter(|task| !task.done).collect()
+    };
+
+    if filtered_tasks.is_empty() {
+        if today_only {
+            println!("{} No tasks due today ({})!", "📅".yellow(), today.cyan());
+        } else if show_all {
+            println!("{}", "📭 No tasks found.".yellow());
+        } else {
+            println!("{}", "🎉 All tasks completed! Use 'todo list -a' to see completed tasks.".green());
+        }
+        return;
+    }
+
+    // Sort tasks: undone first, then done (for both -a and --today)
+    if show_all || today_only {
+        filtered_tasks.sort_by_key(|task| task.done);
+    }
+
+    let header = if today_only {
+        format!("📅 Today's Tasks ({}):", today)
+    } else if show_all {
+        "📋 Your Complete Task List:".to_string()
+    } else {
+        "📋 Your Pending Tasks:".to_string()
+    };
+    
+    println!("{}", header.blue().bold());
+    
+    for task in filtered_tasks {
         let status = if task.done { "✅" } else { "⬜" };
         let due_info = match &task.due_date {
             Some(date) => format!(" 📅 {}", date.yellow()),
@@ -175,4 +237,16 @@ fn rand() -> usize {
     use std::time::{SystemTime, UNIX_EPOCH};
     let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
     (now.as_nanos() % 10) as usize
+}
+
+// Show information about data storage location
+pub fn show_info() {
+    let data_location = get_data_location();
+    let tasks = load_tasks();
+    
+    println!("{}", "📊 Todo CLI Information".blue().bold());
+    println!("{} {}", "📁 Data stored at:".green(), data_location.cyan());
+    println!("{} {}", "📋 Total tasks:".green(), tasks.len().to_string().cyan());
+    println!("{} {}", "✅ Completed:".green(), tasks.iter().filter(|t| t.done).count().to_string().cyan());
+    println!("{} {}", "⬜ Pending:".green(), tasks.iter().filter(|t| !t.done).count().to_string().cyan());
 }

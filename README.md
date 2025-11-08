@@ -12,17 +12,21 @@ No database needed. Just the `todo` command!
 ---
 
 ## ✨ Features List
-- ✅ `todo add "task"` → Add new task
-- ✅ `todo list` → Show all tasks (strikethrough + emojis)
+- ✅ `todo add "task"` → Add new task (due today by default)
+- ✅ `todo add "task" 3` → Add task due in 3 days
+- ✅ `todo list` → Show pending tasks only
+- ✅ `todo list -a` → Show all tasks (completed + pending)
+- ✅ `todo list -t` → Show today's tasks only
 - ✅ `todo done 1` → Toggle task completion
 - ✅ `todo delete 2` → Delete task
 - ✅ `todo edit 1 "new text"` → Edit task
 - ✅ `todo due 1 "2025-12-31"` → Set due date
 - ✅ `todo search "keyword"` → Search tasks
+- ✅ `todo info` → Show data location & statistics
 - ✅ `todo party` → Party with confetti! 🎉
 - ✅ `todo tui` → **Interactive TUI mode** (ratatui + crossterm)
 - 🔄 `todo sync` → GitHub Gist sync (coming soon!)
-- 💾 Data saved to `todos.json`
+- 💾 **Data saved to `~/.todo/todos.json`** (production ready!)
 - 🎨 Colors, emojis, error handling
 
 ---
@@ -36,7 +40,7 @@ source $HOME/.cargo/env
 
 ### 2. Clone Project
 ```bash
-git clone https://github.com/YOUR_USERNAME/todo.git
+git clone https://github.com/limon636/todo.git
 cd todo
 ```
 
@@ -49,11 +53,30 @@ cargo install --path .
 
 #### CLI Mode (Command Line)
 ```bash
-# Add new task
+# Add new task (due today by default)
 todo add "Learn Rust"
 
-# List tasks
+# Add task due tomorrow
+todo add "Call client" 1
+
+# Add task due in 7 days
+todo add "Weekly review" 7
+
+# Add task due yesterday (past due)
+todo add "Missed deadline" -- -1
+
+# List pending tasks only
 todo list
+
+# List all tasks (including completed)
+todo list -a
+# or
+todo list --all
+
+# List today's tasks only (undone first, then done)
+todo list -t
+# or
+todo list --today
 
 # Mark as done
 todo done 1
@@ -69,6 +92,9 @@ todo due 1 "2025-12-31"
 
 # Search tasks
 todo search "Rust"
+
+# Show data location and statistics
+todo info
 
 # Sync to GitHub Gist (coming soon!)
 todo sync
@@ -99,9 +125,49 @@ todo tui
 
 ### Example Output
 ```text
-📋 Your Task List:
-1 [✅] ~~Learn Rust~~
-2 [⬜] Call mother 📅 2025-12-31
+# Adding tasks with different due dates
+✅ Added! 1 (due today: 2025-11-08)
+✅ Added! 2 (due tomorrow: 2025-11-09)  
+✅ Added! 3 (due in 7 days: 2025-11-15)
+✅ Added! 4 (due yesterday: 2025-11-07)
+
+# Simple syntax examples
+todo add "Finish project"           # Due today
+todo add "Team meeting" 1           # Due tomorrow  
+todo add "Review code" 3            # Due in 3 days
+todo add "Weekly standup" 7         # Due next week
+todo add "Overdue task" -- -2       # Due 2 days ago
+
+# Pending tasks only (default)
+📋 Your Pending Tasks:
+1 [⬜] Learn Rust 📅 2025-11-08
+2 [⬜] Call client 📅 2025-11-09
+
+# All tasks (with -a flag) - undone first
+📋 Your Complete Task List:
+1 [⬜] Learn Rust 📅 2025-11-08
+2 [⬜] Call client 📅 2025-11-09
+3 [⬜] Weekly review 📅 2025-11-15
+5 [✅] ~~Completed task~~ 📅 2025-11-07
+
+# Today's tasks only (with -t flag) - undone first
+📅 Today's Tasks (2025-11-08):
+1 [⬜] Learn Rust 📅 2025-11-08
+6 [⬜] Important meeting 📅 2025-11-08
+4 [✅] ~~Morning workout~~ 📅 2025-11-08
+
+# When all tasks are completed
+🎉 All tasks completed! Use 'todo list -a' to see completed tasks.
+
+# When no tasks due today
+📅 No tasks due today (2025-11-08)!
+
+# Info command output
+📊 Todo CLI Information
+📁 Data stored at: /home/user/.todo/todos.json
+📋 Total tasks: 5
+✅ Completed: 2
+⬜ Pending: 3
 ```
 
 ---
@@ -124,6 +190,25 @@ todo tui
 │q: quit | j/k: up/down | Space/Enter: toggle | a: add                  │
 │e: edit | t: due date | d: delete                                      │
 └────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📁 Production-Ready Data Storage
+
+Your todo data is stored in a hidden directory `~/.todo/todos.json` in your home directory. This ensures:
+
+✅ **Global Access** - Works from any directory  
+✅ **User-Specific** - Each user has their own data  
+✅ **Hidden & Organized** - Doesn't clutter your workspace  
+✅ **Persistent** - Data survives app updates  
+
+```bash
+# Check where your data is stored
+todo info
+
+# Your data location
+~/.todo/todos.json
 ```
 
 ---

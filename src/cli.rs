@@ -11,9 +11,21 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     /// Add a new task
-    Add { text: String },
+    Add { 
+        text: String,
+        /// Set due date (days from today, default: 0 = today)
+        #[arg(default_value = "0")]
+        days: i32,
+    },
     /// Show all tasks
-    List,
+    List {
+        /// Show all tasks including completed ones
+        #[arg(short, long)]
+        all: bool,
+        /// Show today's tasks only
+        #[arg(short, long)]
+        today: bool,
+    },
     /// Mark task as done
     Done { id: u32 },
     /// Delete a task
@@ -30,4 +42,6 @@ pub enum Commands {
     Search { query: String },
     /// Launch TUI mode
     Tui,
+    /// Show data storage location
+    Info,
 }
