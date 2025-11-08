@@ -29,7 +29,7 @@ fn format_date_with_emoji(date: &str) -> String {
         _ => "???",
     };
 
-    format!(" {}{}", day_num.to_string().bright_yellow().bold(), month_emoji.bright_yellow().bold())
+    format!(" {}/{}", day_num.to_string().bright_yellow().bold(), month_emoji.bright_yellow().bold())
 }
 
 // Helper function to display a list of tasks grouped by month
