@@ -1,136 +1,234 @@
-# 🦀 Todo CLI – Rust-এর সুপারফাস্ট টুডু টুল  
+# 🦀 Todo CLI – Super Fast Todo Tool in Rust  
 
 ![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)
 ![License](https://img.shields.io/github/license/limon636/todo-cli?style=for-the-badge)
 ![Stars](https://img.shields.io/github/stars/limon636/todo-cli?style=social)
 
-> **“১ সেকেন্ডে টাস্ক যোগ, লিস্ট, ডিলিট—সব রং + ইমোজি + JSON সেভ!”**  
+> **"Add task in 1 second, list, delete—everything with colors + emojis + JSON save!"**  
 
-একটা **মিনিমাল, ফাস্ট, সুন্দর** CLI টুল—Rust-এ লেখা।  
-কোনো ডাটাবেস লাগবে না। শুধু `todo` কমান্ড!
-
----
-
-## ✨ ফিচার  
-- `todo add "কাজটা"` → নতুন টাস্ক  
-- `todo list` → সব দেখাও (স্ট্রাইকথ্রু + ✅)  
-- `todo done 1` → সম্পন্ন করো  
-- `todo delete 2` → মুছে ফেলো  
-- ডেটা `todos.json`-এ সেভ হয়  
-- রং, ইমোজি, এরর হ্যান্ডলিং  
+A **minimal, fast, beautiful** CLI tool written in Rust.  
+No database needed. Just the `todo` command!
 
 ---
-## 🚀 ইনস্টল করো (৩০ সেকেন্ড)
 
-### ১. Rust ইনস্টল করো
+## ✨ Features List
+- ✅ `todo add "task"` → Add new task
+- ✅ `todo list` → Show all tasks (strikethrough + emojis)
+- ✅ `todo done 1` → Toggle task completion
+- ✅ `todo delete 2` → Delete task
+- ✅ `todo edit 1 "new text"` → Edit task
+- ✅ `todo due 1 "2025-12-31"` → Set due date
+- ✅ `todo search "keyword"` → Search tasks
+- ✅ `todo party` → Party with confetti! 🎉
+- ✅ `todo tui` → **Interactive TUI mode** (ratatui + crossterm)
+- 🔄 `todo sync` → GitHub Gist sync (coming soon!)
+- 💾 Data saved to `todos.json`
+- 🎨 Colors, emojis, error handling
+
+---
+## 🚀 Install (30 seconds)
+
+### 1. Install Rust
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source $HOME/.cargo/env
 ```
 
-### ২. প্রজেক্ট ক্লোন করো
+### 2. Clone Project
 ```bash
 git clone https://github.com/YOUR_USERNAME/todo.git
 cd todo
 ```
 
-### ৩. গ্লোবাল ইনস্টল (যেকোনো জায়গা থেকে চালাও)
+### 3. Global Install (run from anywhere)
 ```bash
 cargo install --path .
 ```
 
-### 🎮 ব্যবহার
-```bash
-# নতুন টাস্ক
-todo add "Rust শেখা শেষ করো"
+### 🎮 Usage
 
-# লিস্ট
+#### CLI Mode (Command Line)
+```bash
+# Add new task
+todo add "Learn Rust"
+
+# List tasks
 todo list
 
-# সম্পন্ন
+# Mark as done
 todo done 1
 
-# মুছে ফেলো
+# Delete task
 todo delete 1
 
-# টাস্ক এডিট করো
-todo edit 1 "নতুন টেক্সট"
+# Edit task
+todo edit 1 "New text"
 
-# ডিউ ডেট সেট করো
+# Set due date
 todo due 1 "2025-12-31"
 
-# GitHub Gist-এ সিঙ্ক করো (আসছে শীঘ্রই!)
+# Search tasks
+todo search "Rust"
+
+# Sync to GitHub Gist (coming soon!)
 todo sync
 
-# পার্টি করো! 🎉
+# Party! 🎉
 todo party
 
-# হেল্প
+# Help
 todo --help
 ```
-### আউটপুট উদাহরণ
+
+#### 🖥️ TUI Mode (Interactive UI)
+```bash
+# Launch TUI mode
+todo tui
+```
+
+**TUI Key Bindings:**
+- `q` - Quit application
+- `j` / `↓` - Move down
+- `k` / `↑` - Move up
+- `Space` / `Enter` - Toggle task completion
+- `a` - Add new task
+- `e` - Edit selected task
+- `t` - Set due date
+- `d` - Delete task
+- `Esc` - Exit input mode
+
+### Example Output
 ```text
-📋 তোমার টাস্ক লিস্ট:
-1 [✅] ~~Rust শেখা শেষ করো~~
-2 [⬜] মা-কে ফোন করো 📅 2025-12-31
+📋 Your Task List:
+1 [✅] ~~Learn Rust~~
+2 [⬜] Call mother 📅 2025-12-31
 ```
 
 ---
 
-## ✨ ফিচার লিস্ট
-- ✅ `todo add "কাজটা"` → নতুন টাস্ক যোগ করো
-- ✅ `todo list` → সব টাস্ক দেখাও (স্ট্রাইকথ্রু + ইমোজি)
-- ✅ `todo done 1` → টাস্ক সম্পন্ন/আবার চালু করো
-- ✅ `todo delete 2` → টাস্ক মুছে ফেলো
-- ✅ `todo edit 1 "নতুন টেক্সট"` → টাস্ক এডিট করো
-- ✅ `todo due 1 "2025-12-31"` → ডিউ ডেট সেট করো
-- ✅ `todo party` → পার্টি করো কনফেটি দিয়ে! 🎉
-- 🔄 `todo sync` → GitHub Gist সিঙ্ক (আসছে শীঘ্রই!)
-- 💾 ডেটা `todos.json`-এ সেভ হয়
-- 🎨 রং, ইমোজি, এরর হ্যান্ডলিং
+## 🖼️ TUI Mode Screenshot
 
-### 🛠 ডেভেলপার? কন্ট্রিবিউট করো!
+```
+┌🦀 Todo TUI - Your Super Fast Todo Tool──────────────────────────────────┐
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+┌📋 Task List─────────────────────────────────────────────────────────────┐
+│>> 1 [⬜] Learn Rust 📅 2025-12-31                                      │
+│   2 [✅] Call mother                                                   │
+│   3 [⬜] Finish project                                                │
+└────────────────────────────────────────────────────────────────────────┘
+┌Input───────────────────────────────────────────────────────────────────┐
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+┌💡 Help─────────────────────────────────────────────────────────────────┐
+│q: quit | j/k: up/down | Space/Enter: toggle | a: add                  │
+│e: edit | t: due date | d: delete                                      │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── main.rs      # Main entry point
+├── lib.rs       # Library exports
+├── task.rs      # Task struct & file operations  
+├── commands.rs  # CLI command implementations
+├── tui.rs       # Terminal UI (ratatui)
+└── cli.rs       # CLI argument parsing (clap)
+```
+
+### 🗂️ Module Organization
+
+**`task.rs`** - Core Data & Storage
+- `Task` struct definition
+- `load_tasks()` - Load from JSON file
+- `save_tasks()` - Save to JSON file
+
+**`commands.rs`** - CLI Commands
+- `add_task()` - Add new task
+- `list_tasks()` - Show task list
+- `toggle_task()` - Toggle completion
+- `delete_task()` - Delete task
+- `edit_task()` - Edit task
+- `set_due_date()` - Set due date
+- `search()` - Search tasks
+- `sync_tasks()` - Sync (placeholder)
+- `party()` - Party! 🎉
+
+**`tui.rs`** - Terminal User Interface
+- `App` struct - TUI state management
+- `AppMode` enum - Normal/Adding/Editing modes
+- `run_tui()` - TUI main loop
+- `ui()` - UI rendering function
+
+**`cli.rs`** - Command Line Interface
+- `Cli` struct - CLI configuration
+- `Commands` enum - Available commands
+
+**`main.rs`** - Entry Point
+- Module imports
+- CLI parsing & command dispatch
+
+**`lib.rs`** - Library Interface
+- Public API exports
+- Documentation
+
+### 🎯 Benefits of This Structure
+
+✅ **Modularity** - Each feature in separate file  
+✅ **Reusability** - Can be used as a library  
+✅ **Maintainability** - Easy to find & edit  
+✅ **Testability** - Each module can be tested separately  
+✅ **Clean Code** - Clear separation of concerns
+
+---
+
+### 🛠 Developer? Contribute!
 ```bash
 git clone https://github.com/YOUR_USERNAME/todo.git
 cd todo
-cargo run -- add "নতুন ফিচার"
+cargo run -- add "New feature"
 ```
 
-### ফিউচার আইডিয়া
-- 🔄 GitHub/Gist API ইন্টিগ্রেশন (পূর্ণ সিঙ্ক ফিচার)
-- 🔍 `todo search "keyword"` → টাস্ক সার্চ
-- 📊 `todo stats` → স্ট্যাটিস্টিক্স দেখাও
-- 🏷️ `todo tag 1 "urgent"` → ট্যাগ যোগ করো
-- ⏰ `todo remind 1` → রিমাইন্ডার সেট করো
+### Future Ideas
+- 🔄 GitHub/Gist API integration (full sync feature)
+- 📊 `todo stats` → Show statistics
+- 🏷️ `todo tag 1 "urgent"` → Add tags
+- ⏰ `todo remind 1` → Set reminders
+- 🎨 TUI theme customization
+- 📁 Multiple todo file support
 
-### 📦 crates.io-তে পাবলিশ
+### 📦 Publish to crates.io
 ```bash
 cargo publish
 ```
 
-### 🔥 পারফরম্যান্স
+### 🔥 Performance
 ```text
-কম্পাইল → ২ এমবি বাইনারি
-রান → ০.০০১ সেকেন্ড
-মেমরি → ৫ এমবি
+Compile → 2MB binary
+Run → 0.001 seconds
+Memory → 5MB
 ```
 
-### 👨‍💻 লেখক
+### 👨‍💻 Author
 Md. Shariful Islam
 ```text
 GitHub: limon636
 Email: limon.pstu@gmail.com
 ```
 
-### ⭐ সাপোর্ট
+### ⭐ Support
 ```text
-পছন্দ হলে স্টার দাও!
-প্রশ্ন থাকলে Issue খোলো
+Star if you like it!
+Open issues for questions
 ```
 
-### তোমার প্রথম Rust CLI রেডি!
+### Your first Rust CLI is ready!
 ```bash
-todo add "GitHub-এ স্টার দাও 🌟"
+todo add "Star on GitHub 🌟"
 ```
 
 #### Made with ❤️ in Rust
