@@ -41,7 +41,7 @@ source $HOME/.cargo/env
 ### 2. Clone Project
 ```bash
 git clone https://github.com/limon636/todo-cli.git
-cd todo
+cd todo-cli
 ```
 
 ### 3. Global Install (run from anywhere)
