@@ -110,7 +110,7 @@ impl App {
                 id,
                 text: self.input.clone(),
                 done: false,
-                due_date: None,
+                due_date: Some(crate::task::get_today()),
             });
             save_tasks(&self.tasks);
             self.message = Some(format!("Task {} added!", id));

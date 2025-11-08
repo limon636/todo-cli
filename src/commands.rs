@@ -1,6 +1,138 @@
 use colored::*;
 use crate::task::{load_tasks, save_tasks, Task, get_data_location, get_today, get_date_with_offset, load_removed_tasks, add_to_removed};
 
+// Helper function to format date with calendar emoji and month abbreviation
+fn format_date_with_emoji(date: &str) -> String {
+    // Extract month and day from date (YYYY-MM-DD format)
+    let parts: Vec<&str> = date.split('-').collect();
+    let month = parts.get(1).unwrap_or(&"01");
+    let day = parts.get(2).unwrap_or(&"01");
+    let day_num: u32 = day.parse().unwrap_or(1);
+    
+    // Month abbreviations
+    let month_emoji = match month.as_ref() {
+        "01" => "JAN", "02" => "FEB", "03" => "MAR", "04" => "APR",
+        "05" => "MAY", "06" => "JUN", "07" => "JUL", "08" => "AUG",
+        "09" => "SEP", "10" => "OCT", "11" => "Nov", "12" => "Dec",
+        _ => "???",
+    };
+
+    format!(" {}{}", day_num.to_string().bright_yellow().bold(), month_emoji.bright_yellow().bold())
+}
+
+// Helper function to display a list of tasks grouped by month
+fn display_task_list(tasks: &[&Task], header: &str, dimmed: bool, header_color: &str) {
+    if tasks.is_empty() {
+        return;
+    }
+    
+    // Apply different colors based on header_color parameter
+    match header_color {
+        "red" => println!("{}", header.red().bold()),
+        "blue" => println!("{}", header.blue().bold()),
+        _ => println!("{}", header.blue().bold()), // default to blue
+    }
+    
+    // Group tasks by year-month and sort
+    use std::collections::BTreeMap;
+    let mut grouped_tasks: BTreeMap<String, Vec<&Task>> = BTreeMap::new();
+    
+    for task in tasks {
+        if let Some(due_date) = &task.due_date {
+            let parts: Vec<&str> = due_date.split('-').collect();
+            let year = parts.get(0).unwrap_or(&"0000");
+            let month = parts.get(1).unwrap_or(&"00");
+            
+            let group_key = format!("{}-{}", year, month); // For sorting
+            
+            grouped_tasks.entry(group_key).or_insert_with(Vec::new).push(*task);
+        } else {
+            // Tasks without dates go to a special group
+            grouped_tasks.entry("0000-00".to_string()).or_insert_with(Vec::new).push(*task);
+        }
+    }
+    
+    // Display each group
+    for (group_key, mut group_tasks) in grouped_tasks {
+        // Sort tasks within each group by due date, then by id
+        group_tasks.sort_by(|a, b| {
+            match (&a.due_date, &b.due_date) {
+                (Some(date_a), Some(date_b)) => date_a.cmp(date_b),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => a.id.cmp(&b.id),
+            }
+        });
+        
+        // Display group header
+        if group_key == "0000-00" {
+            println!("\n{}", "[No Due Date]".bright_black().bold());
+        } else {
+            let parts: Vec<&str> = group_key.split('-').collect();
+            let year = parts.get(0).unwrap_or(&"0000");
+            let month = parts.get(1).unwrap_or(&"00");
+            let month_name = match month.as_ref() {
+                "01" => "Jan", "02" => "Feb", "03" => "Mar", "04" => "Apr",
+                "05" => "May", "06" => "Jun", "07" => "Jul", "08" => "Aug",
+                "09" => "Sep", "10" => "Oct", "11" => "Nov", "12" => "Dec",
+                _ => "???",
+            };
+            println!("╔══════════════════════════════════╗");
+            println!("║          {}", format!("  {} {}              ║", month_name.bright_cyan().bold(), year.bright_cyan().bold()));
+            println!("╚══════════════════════════════════╝");
+        }
+        
+        // Display tasks in this group
+        for task in group_tasks {
+            let status = if task.done { "✅" } else { "⬜" };
+            let due_info = match &task.due_date {
+                Some(date) => format_date_with_emoji(date),
+                None => String::new(),
+            };
+            
+            // Check task status for color coding
+            let today = crate::task::get_today();
+            let task_text = if !task.done {
+                if let Some(due_date) = &task.due_date {
+                    if due_date < &today {
+                        // Overdue tasks - red
+                        task.text.red().to_string()
+                    } else if due_date > &today {
+                        // Future tasks - check if tomorrow or later
+                        let tomorrow = crate::task::get_date_with_offset(1);
+                        if due_date == &tomorrow {
+                            // Tomorrow tasks - light green
+                            task.text.bright_blue().to_string()
+                        } else {
+                            // Tasks after tomorrow - green
+                            task.text.green().to_string()
+                        }
+                    } else {
+                        // Today's tasks - normal color
+                        task.text.bold().to_string()
+                    }
+                } else {
+                    // No due date - normal color
+                    task.text.to_string()
+                }
+            } else {
+                // Completed tasks - normal color
+                task.text.to_string()
+            };
+            
+            let line = format!("{} [{}] {}{}", task.id.to_string().bright_green(), status, task_text, due_info);
+            
+            if task.done {
+                println!("{}", line.strikethrough().dimmed());
+            } else if dimmed {
+                println!("{}", line.dimmed());
+            } else {
+                println!("{}", line);
+            }
+        }
+    }
+}
+
 // Add new task
 pub fn add_task(text: String, days_offset: i32) {
     let mut tasks = load_tasks();
@@ -69,6 +201,16 @@ pub fn list_tasks(show_all: bool, today_only: bool) {
     // Sort tasks: undone first, then done (for both -a and --today)
     if show_all || today_only {
         filtered_tasks.sort_by_key(|task| task.done);
+    } else {
+        // Sort pending tasks by due date
+        filtered_tasks.sort_by(|a, b| {
+            match (&a.due_date, &b.due_date) {
+                (Some(date_a), Some(date_b)) => date_a.cmp(date_b),
+                (Some(_), None) => std::cmp::Ordering::Less,
+                (None, Some(_)) => std::cmp::Ordering::Greater,
+                (None, None) => a.id.cmp(&b.id),
+            }
+        });
     }
 
     let header = if today_only {
@@ -79,21 +221,7 @@ pub fn list_tasks(show_all: bool, today_only: bool) {
         "📋 Your Pending Tasks:".to_string()
     };
     
-    println!("{}", header.blue().bold());
-    
-    for task in filtered_tasks {
-        let status = if task.done { "✅" } else { "⬜" };
-        let due_info = match &task.due_date {
-            Some(date) => format!(" 📅 {}", date.yellow()),
-            None => String::new(),
-        };
-        let line = format!("{} [{}] {}{}", task.id, status, task.text, due_info);
-        if task.done {
-            println!("{}", line.strikethrough().dimmed());
-        } else {
-            println!("{}", line);
-        }
-    }
+    display_task_list(&filtered_tasks, &header, false, "blue");
 }
 
 // Toggle task completion
@@ -313,20 +441,7 @@ pub fn search(query: String) {
     if results.is_empty() {
         println!("{} No tasks match '{}'!", "🔍".yellow(), query);
     } else {
-        println!("{}", "🔍 Search Results:".blue().bold());
-        for task in results {
-            let status = if task.done { "✅" } else { "⬜" };
-            let due_info = match &task.due_date {
-                Some(date) => format!(" 📅 {}", date.yellow()),
-                None => String::new(),
-            };
-            let line = format!("{} [{}] {}{}", task.id, status, task.text, due_info);
-            if task.done {
-                println!("{}", line.strikethrough().dimmed());
-            } else {
-                println!("{}", line);
-            }
-        }
+        display_task_list(&results, "🔍 Search Results:", false, "blue");
     }
 }
 
@@ -358,20 +473,8 @@ pub fn show_removed_tasks() {
         return;
     }
     
-    println!("{}", "🗑️ Removed Tasks:".red().bold());
-    for task in &removed_tasks {
-        let status = if task.done { "✅" } else { "⬜" };
-        let due_info = match &task.due_date {
-            Some(date) => format!(" 📅 {}", date.yellow()),
-            None => String::new(),
-        };
-        let line = format!("{} [{}] {}{}", task.id, status, task.text, due_info);
-        if task.done {
-            println!("{}", line.strikethrough().dimmed());
-        } else {
-            println!("{}", line.dimmed());
-        }
-    }
+    let task_refs: Vec<&Task> = removed_tasks.iter().collect();
+    display_task_list(&task_refs, "🗑️ Removed Tasks:", true, "red"); // Use dimmed style for removed tasks
     
     println!("\n{} Total removed tasks: {}", "📊".blue(), removed_tasks.len().to_string().cyan());
 }
