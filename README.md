@@ -314,8 +314,8 @@ cargo publish
 ### 🔥 Performance
 ```text
 Compile → 2MB binary
-Run → 0.001 seconds
-Memory → 5MB
+Run → 0.02 seconds
+Memory → 3.1MB
 ```
 
 ### 👨‍💻 Author

@@ -23,9 +23,9 @@ fn format_date_with_emoji(date: &str) -> String {
     
     // Month abbreviations
     let month_emoji = match month.as_ref() {
-        "01" => "JAN", "02" => "FEB", "03" => "MAR", "04" => "APR",
-        "05" => "MAY", "06" => "JUN", "07" => "JUL", "08" => "AUG",
-        "09" => "SEP", "10" => "OCT", "11" => "Nov", "12" => "Dec",
+        "01" => "Jan", "02" => "Feb", "03" => "Mar", "04" => "Apr",
+        "05" => "May", "06" => "Jun", "07" => "Jul", "08" => "Aug",
+        "09" => "Sep", "10" => "Oct", "11" => "Nov", "12" => "Dec",
         _ => "???",
     };
 
