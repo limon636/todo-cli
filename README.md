@@ -32,7 +32,22 @@ No database needed. Just the `todo` command!
 - 🎨 Colors, emojis, error handling
 
 ---
-## 🚀 Install (30 seconds)
+## 🚀 Quick Install (1 command)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/limon636/todo-cli/main/install.sh | bash
+```
+
+**That's it!** The script will:
+- ✅ Auto-detect your OS/architecture  
+- ✅ Install Rust (if needed)
+- ✅ Compile & install todo CLI
+- ✅ Add to PATH automatically
+
+### 🛠️ Manual Install (if preferred)
+
+<details>
+<summary>Click to expand manual installation steps</summary>
 
 ### 1. Install Rust
 ```bash
@@ -50,6 +65,8 @@ cd todo-cli
 ```bash
 cargo install --path .
 ```
+
+</details>
 
 ### 🎮 Usage
 

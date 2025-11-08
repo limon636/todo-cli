@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(name = "todo")]
 #[command(about = "🦀 Your Super Fast Todo Tool")]
+#[command(version)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Commands,
