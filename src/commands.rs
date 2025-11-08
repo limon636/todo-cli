@@ -1,5 +1,17 @@
 use colored::*;
-use crate::task::{load_tasks, save_tasks, Task, get_data_location, get_today, get_date_with_offset, load_removed_tasks, add_to_removed};
+use crate::task::{load_tasks, save_tasks_safe, Task, get_data_location, get_today, get_date_with_offset, validate_date, load_removed_tasks, add_to_removed};
+
+// Helper function to validate task ID exists
+fn validate_task_id(id: u32, tasks: &[Task]) -> Result<usize, String> {
+    if id == 0 {
+        return Err("Task ID cannot be 0".to_string());
+    }
+    
+    match tasks.iter().position(|t| t.id == id) {
+        Some(index) => Ok(index),
+        None => Err(format!("Task {} not found", id)),
+    }
+}
 
 // Helper function to format date with calendar emoji and month abbreviation
 fn format_date_with_emoji(date: &str) -> String {
@@ -135,6 +147,17 @@ fn display_task_list(tasks: &[&Task], header: &str, dimmed: bool, header_color: 
 
 // Add new task
 pub fn add_task(text: String, days_offset: i32) {
+    // Validate input text
+    if text.trim().is_empty() {
+        println!("{} Task text cannot be empty!", "❌".red());
+        return;
+    }
+    
+    if text.len() > 500 {
+        println!("{} Task text is too long (max 500 characters)!", "❌".red());
+        return;
+    }
+    
     let mut tasks = load_tasks();
     let id = tasks.iter().map(|t| t.id).max().unwrap_or(0) + 1;
     let due_date = get_date_with_offset(days_offset);
@@ -146,7 +169,7 @@ pub fn add_task(text: String, days_offset: i32) {
         due_date: Some(due_date.clone()) 
     });
     
-    save_tasks(&tasks);
+    save_tasks_safe(&tasks);
     
     let date_info = if days_offset == 0 {
         format!(" (due today: {})", due_date.yellow())
@@ -227,37 +250,42 @@ pub fn list_tasks(show_all: bool, today_only: bool) {
 // Toggle task completion
 pub fn toggle_task(id: u32) {
     let mut tasks = load_tasks();
-    let mut found = false;
-    let mut new_done = false;
-
-    for task in &mut tasks {
-        if task.id == id {
-            task.done = !task.done;
-            new_done = task.done;
-            found = true;
-            break;
+    
+    // Validate task ID
+    let index = match validate_task_id(id, &tasks) {
+        Ok(idx) => idx,
+        Err(err) => {
+            println!("{} {}", "❌".red(), err);
+            return;
         }
-    }
+    };
 
-    if found {
-        save_tasks(&tasks);
-        println!("{} Task {} {}", "🎉".green(), id, if new_done { "completed!".green() } else { "reopened!".yellow() });
-    } else {
-        println!("{} Task {} not found!", "❌".red(), id);
-    }
+    tasks[index].done = !tasks[index].done;
+    let new_done = tasks[index].done;
+
+    save_tasks_safe(&tasks);
+    println!("{} Task {} {}", "🎉".green(), id, if new_done { "completed!".green() } else { "reopened!".yellow() });
 }
 
 // Delete task
 pub fn delete_task(id: u32) {
     let mut tasks = load_tasks();
+    
+    // Validate task ID
+    let _index = match validate_task_id(id, &tasks) {
+        Ok(idx) => idx,
+        Err(err) => {
+            println!("{} {}", "❌".red(), err);
+            return;
+        }
+    };
+    
     let old_len = tasks.len();
     tasks.retain(|t| t.id != id);
     
     if tasks.len() < old_len {
-        save_tasks(&tasks);
+        save_tasks_safe(&tasks);
         println!("{} Task {} deleted!", "🗑️".red(), id);
-    } else {
-        println!("{} Task {} not found!", "❌".red(), id);
     }
 }
 
@@ -351,7 +379,7 @@ pub fn remove_tasks_by_date(days_ago: i32) {
         });
         let removed_count = original_count - updated_tasks.len();
         
-        save_tasks(&updated_tasks);
+        save_tasks_safe(&updated_tasks);
         println!("{} Successfully removed {} task(s) {}!", 
             "✅".green(), removed_count, date_desc);
     } else {
@@ -361,44 +389,55 @@ pub fn remove_tasks_by_date(days_ago: i32) {
 
 // Edit task
 pub fn edit_task(id: u32, new_text: String) {
+    // Validate input text
+    if new_text.trim().is_empty() {
+        println!("{} Task text cannot be empty!", "❌".red());
+        return;
+    }
+    
+    if new_text.len() > 500 {
+        println!("{} Task text is too long (max 500 characters)!", "❌".red());
+        return;
+    }
+    
     let mut tasks = load_tasks();
-    let mut found = false;
-
-    for task in &mut tasks {
-        if task.id == id {
-            task.text = new_text.clone();
-            found = true;
-            break;
+    
+    // Validate task ID
+    let index = match validate_task_id(id, &tasks) {
+        Ok(idx) => idx,
+        Err(err) => {
+            println!("{} {}", "❌".red(), err);
+            return;
         }
-    }
+    };
 
-    if found {
-        save_tasks(&tasks);
-        println!("{} Task {} updated!", "✏️".green(), id);
-    } else {
-        println!("{} Task {} not found!", "❌".red(), id);
-    }
+    tasks[index].text = new_text.clone();
+    save_tasks_safe(&tasks);
+    println!("{} Task {} updated!", "✏️".green(), id);
 }
 
 // Set due date
 pub fn set_due_date(id: u32, date: String) {
+    // Validate the date format first
+    if let Err(err) = validate_date(&date) {
+        println!("{} {}", "❌".red(), err);
+        return;
+    }
+    
     let mut tasks = load_tasks();
-    let mut found = false;
-
-    for task in &mut tasks {
-        if task.id == id {
-            task.due_date = Some(date.clone());
-            found = true;
-            break;
+    
+    // Validate task ID
+    let index = match validate_task_id(id, &tasks) {
+        Ok(idx) => idx,
+        Err(err) => {
+            println!("{} {}", "❌".red(), err);
+            return;
         }
-    }
+    };
 
-    if found {
-        save_tasks(&tasks);
-        println!("{} Due date set for task {}: {}", "📅".green(), id, date.yellow());
-    } else {
-        println!("{} Task {} not found!", "❌".red(), id);
-    }
+    tasks[index].due_date = Some(date.clone());
+    save_tasks_safe(&tasks);
+    println!("{} Due date set for task {}: {}", "📅".green(), id, date.yellow());
 }
 
 // Sync to GitHub Gist
@@ -433,6 +472,17 @@ pub fn party() {
 
 // Search tasks
 pub fn search(query: String) {
+    // Validate search query
+    if query.trim().is_empty() {
+        println!("{} Search query cannot be empty!", "❌".red());
+        return;
+    }
+    
+    if query.len() > 100 {
+        println!("{} Search query is too long (max 100 characters)!", "❌".red());
+        return;
+    }
+    
     let tasks = load_tasks();
     let results: Vec<&Task> = tasks.iter()
         .filter(|task| task.text.to_lowercase().contains(&query.to_lowercase()))

@@ -12,7 +12,7 @@ use ratatui::{
     widgets::{Block, Borders, List, ListItem, ListState, Paragraph, Wrap},
     Frame, Terminal,
 };
-use crate::task::{load_tasks, save_tasks, Task};
+use crate::task::{load_tasks, save_tasks_safe, Task, validate_date};
 
 // TUI State
 pub struct App {
@@ -79,7 +79,7 @@ impl App {
         if let Some(i) = self.list_state.selected() {
             if i < self.tasks.len() {
                 self.tasks[i].done = !self.tasks[i].done;
-                save_tasks(&self.tasks);
+                save_tasks_safe(&self.tasks);
                 self.message = Some(format!("Task {} completed!", self.tasks[i].id));
             }
         }
@@ -90,7 +90,7 @@ impl App {
             if i < self.tasks.len() {
                 let id = self.tasks[i].id;
                 self.tasks.remove(i);
-                save_tasks(&self.tasks);
+                save_tasks_safe(&self.tasks);
                 self.message = Some(format!("Task {} deleted!", id));
                 
                 // Adjust selection
@@ -104,44 +104,85 @@ impl App {
     }
 
     pub fn add_task(&mut self) {
-        if !self.input.is_empty() {
-            let id = self.tasks.iter().map(|t| t.id).max().unwrap_or(0) + 1;
-            self.tasks.push(Task {
-                id,
-                text: self.input.clone(),
-                done: false,
-                due_date: Some(crate::task::get_today()),
-            });
-            save_tasks(&self.tasks);
-            self.message = Some(format!("Task {} added!", id));
+        if self.input.trim().is_empty() {
+            self.message = Some("Task text cannot be empty!".to_string());
             self.input.clear();
             self.mode = AppMode::Normal;
-            self.list_state.select(Some(self.tasks.len() - 1));
+            return;
         }
+        
+        if self.input.len() > 500 {
+            self.message = Some("Task text is too long (max 500 characters)!".to_string());
+            self.input.clear();
+            self.mode = AppMode::Normal;
+            return;
+        }
+        
+        let id = self.tasks.iter().map(|t| t.id).max().unwrap_or(0) + 1;
+        self.tasks.push(Task {
+            id,
+            text: self.input.clone(),
+            done: false,
+            due_date: Some(crate::task::get_today()),
+        });
+        save_tasks_safe(&self.tasks);
+        self.message = Some(format!("Task {} added!", id));
+        self.input.clear();
+        self.mode = AppMode::Normal;
+        self.list_state.select(Some(self.tasks.len() - 1));
     }
 
     pub fn edit_task(&mut self, id: u32) {
-        if !self.input.is_empty() {
-            if let Some(task) = self.tasks.iter_mut().find(|t| t.id == id) {
-                task.text = self.input.clone();
-                save_tasks(&self.tasks);
-                self.message = Some(format!("Task {} updated!", id));
-            }
+        if self.input.trim().is_empty() {
+            self.message = Some("Task text cannot be empty!".to_string());
             self.input.clear();
             self.mode = AppMode::Normal;
+            return;
         }
+        
+        if self.input.len() > 500 {
+            self.message = Some("Task text is too long (max 500 characters)!".to_string());
+            self.input.clear();
+            self.mode = AppMode::Normal;
+            return;
+        }
+        
+        if let Some(task) = self.tasks.iter_mut().find(|t| t.id == id) {
+            task.text = self.input.clone();
+            save_tasks_safe(&self.tasks);
+            self.message = Some(format!("Task {} updated!", id));
+        } else {
+            self.message = Some(format!("Task {} not found!", id));
+        }
+        self.input.clear();
+        self.mode = AppMode::Normal;
     }
 
     pub fn set_due_date(&mut self, id: u32) {
-        if !self.input.is_empty() {
-            if let Some(task) = self.tasks.iter_mut().find(|t| t.id == id) {
-                task.due_date = Some(self.input.clone());
-                save_tasks(&self.tasks);
-                self.message = Some(format!("Due date {} set!", self.input));
-            }
+        if self.input.trim().is_empty() {
+            self.message = Some("Date cannot be empty!".to_string());
             self.input.clear();
             self.mode = AppMode::Normal;
+            return;
         }
+        
+        // Validate the date format first
+        if let Err(err) = validate_date(&self.input) {
+            self.message = Some(format!("Invalid date: {}", err));
+            self.input.clear();
+            self.mode = AppMode::Normal;
+            return;
+        }
+        
+        if let Some(task) = self.tasks.iter_mut().find(|t| t.id == id) {
+            task.due_date = Some(self.input.clone());
+            save_tasks_safe(&self.tasks);
+            self.message = Some(format!("Due date {} set!", self.input));
+        } else {
+            self.message = Some(format!("Task {} not found!", id));
+        }
+        self.input.clear();
+        self.mode = AppMode::Normal;
     }
 }
 

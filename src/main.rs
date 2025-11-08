@@ -7,6 +7,8 @@ use clap::Parser;
 use cli::{Cli, Commands};
 use commands::*;
 use tui::run_tui;
+use task::restore_from_backup;
+use colored::*;
 
 fn main() {
     let cli = Cli::parse();
@@ -24,6 +26,12 @@ fn main() {
         Commands::Party => party(),
         Commands::Search { query } => search(query),
         Commands::Info => show_info(),
+        Commands::Restore => {
+            match restore_from_backup() {
+                Ok(_) => println!("{} Tasks restored from backup successfully!", "✅".green()),
+                Err(err) => println!("{} Failed to restore from backup: {}", "❌".red(), err),
+            }
+        }
         Commands::Tui => {
             if let Err(e) = run_tui() {
                 eprintln!("Error: {}", e);

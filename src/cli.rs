@@ -52,4 +52,6 @@ pub enum Commands {
     Tui,
     /// Show data storage location
     Info,
+    /// Restore from backup file
+    Restore,
 }
