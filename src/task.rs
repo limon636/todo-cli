@@ -34,6 +34,11 @@ fn get_todos_file_path() -> PathBuf {
     get_todo_dir().join("todos.json")
 }
 
+// Get the full path to removed.json
+fn get_removed_file_path() -> PathBuf {
+    get_todo_dir().join("removed.json")
+}
+
 // Load tasks from file
 pub fn load_tasks() -> Vec<Task> {
     let file_path = get_todos_file_path();
@@ -111,4 +116,31 @@ pub fn get_date_with_offset(days: i32) -> String {
             get_today()
         }
     }
+}
+
+// Load removed tasks from file
+pub fn load_removed_tasks() -> Vec<Task> {
+    let file_path = get_removed_file_path();
+    
+    let mut file = match OpenOptions::new().read(true).open(&file_path) {
+        Ok(f) => f,
+        Err(_) => return Vec::new(),
+    };
+    let mut contents = String::new();
+    file.read_to_string(&mut contents).ok();
+    serde_json::from_str(&contents).unwrap_or_default()
+}
+
+// Save removed tasks to file
+pub fn save_removed_tasks(tasks: &[Task]) {
+    let file_path = get_removed_file_path();
+    let json = serde_json::to_string_pretty(tasks).unwrap();
+    fs::write(&file_path, json).expect("Could not write to removed.json file!");
+}
+
+// Add tasks to removed storage
+pub fn add_to_removed(tasks_to_remove: Vec<Task>) {
+    let mut removed_tasks = load_removed_tasks();
+    removed_tasks.extend(tasks_to_remove);
+    save_removed_tasks(&removed_tasks);
 }

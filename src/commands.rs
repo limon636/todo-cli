@@ -1,5 +1,5 @@
 use colored::*;
-use crate::task::{load_tasks, save_tasks, Task, get_data_location, get_today, get_date_with_offset};
+use crate::task::{load_tasks, save_tasks, Task, get_data_location, get_today, get_date_with_offset, load_removed_tasks, add_to_removed};
 
 // Add new task
 pub fn add_task(text: String, days_offset: i32) {
@@ -133,6 +133,104 @@ pub fn delete_task(id: u32) {
     }
 }
 
+// Remove all tasks older than specified number of days ago
+pub fn remove_tasks_by_date(days_ago: i32) {
+    use std::io::{self, Write};
+    
+    let tasks = load_tasks();
+    // Calculate cutoff date: remove tasks older than this date
+    // days_ago=1 means remove tasks older than 1 day ago (2+ days old)
+    // days_ago=3 means remove tasks older than 3 days ago (4+ days old)
+    let cutoff_days = days_ago + 1;
+    let cutoff_date = get_date_with_offset(-cutoff_days);
+    
+    // Find tasks older than cutoff date (due_date < cutoff_date)
+    let matching_tasks: Vec<&Task> = tasks.iter()
+        .filter(|task| {
+            if let Some(due_date) = &task.due_date {
+                due_date < &cutoff_date
+            } else {
+                false
+            }
+        })
+        .collect();
+    
+    if matching_tasks.is_empty() {
+        let date_desc = if days_ago == 0 {
+            "older than today".to_string()
+        } else {
+            format!("older than {}", cutoff_date)
+        };
+        
+        println!("{} No tasks found {}!", "📅".yellow(), date_desc);
+        return;
+    }
+    
+    // Show confirmation prompt
+    let date_desc = if days_ago == 0 {
+        "older than today".to_string()
+    } else if days_ago == 1 {
+        "older than 1 day ago".to_string()
+    } else {
+        format!("older than {} days ago", days_ago)
+    };
+    
+    println!("\n{} Tasks to be removed ({}):", "🗑️".red().bold(), date_desc.cyan());
+    for task in &matching_tasks {
+        let status = if task.done { "✅" } else { "⬜" };
+        let due_str = task.due_date.as_ref().map_or("No date".to_string(), |d| d.clone());
+        let line = format!("{} [{}] {} ({})", task.id, status, task.text, due_str);
+        if task.done {
+            println!("  {}", line.strikethrough().dimmed());
+        } else {
+            println!("  {}", line);
+        }
+    }
+    
+    print!("\n{} Do you want to remove all {} task(s) {}? [y/N]: ", 
+        "❓".yellow(), matching_tasks.len(), date_desc);
+    io::stdout().flush().unwrap();
+    
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    let input = input.trim().to_lowercase();
+    
+    if input == "y" || input == "yes" {
+        // Collect tasks to be removed (older than cutoff date)
+        let tasks_to_remove: Vec<Task> = tasks.iter()
+            .filter(|task| {
+                if let Some(due_date) = &task.due_date {
+                    due_date < &cutoff_date
+                } else {
+                    false
+                }
+            })
+            .cloned()
+            .collect();
+        
+        // Add to removed storage
+        add_to_removed(tasks_to_remove);
+        
+        // Remove from active tasks
+        let mut updated_tasks = tasks;
+        let original_count = updated_tasks.len();
+        updated_tasks.retain(|task| {
+            if let Some(due_date) = &task.due_date {
+                due_date >= &cutoff_date
+            } else {
+                true // Keep tasks without due dates
+            }
+        });
+        let removed_count = original_count - updated_tasks.len();
+        
+        save_tasks(&updated_tasks);
+        println!("{} Successfully removed {} task(s) {}!", 
+            "✅".green(), removed_count, date_desc);
+    } else {
+        println!("{} Operation cancelled.", "❌".yellow());
+    }
+}
+
 // Edit task
 pub fn edit_task(id: u32, new_text: String) {
     let mut tasks = load_tasks();
@@ -249,4 +347,31 @@ pub fn show_info() {
     println!("{} {}", "📋 Total tasks:".green(), tasks.len().to_string().cyan());
     println!("{} {}", "✅ Completed:".green(), tasks.iter().filter(|t| t.done).count().to_string().cyan());
     println!("{} {}", "⬜ Pending:".green(), tasks.iter().filter(|t| !t.done).count().to_string().cyan());
+}
+
+// Show removed tasks
+pub fn show_removed_tasks() {
+    let removed_tasks = load_removed_tasks();
+    
+    if removed_tasks.is_empty() {
+        println!("{}", "🗑️ No removed tasks found.".yellow());
+        return;
+    }
+    
+    println!("{}", "🗑️ Removed Tasks:".red().bold());
+    for task in &removed_tasks {
+        let status = if task.done { "✅" } else { "⬜" };
+        let due_info = match &task.due_date {
+            Some(date) => format!(" 📅 {}", date.yellow()),
+            None => String::new(),
+        };
+        let line = format!("{} [{}] {}{}", task.id, status, task.text, due_info);
+        if task.done {
+            println!("{}", line.strikethrough().dimmed());
+        } else {
+            println!("{}", line.dimmed());
+        }
+    }
+    
+    println!("\n{} Total removed tasks: {}", "📊".blue(), removed_tasks.len().to_string().cyan());
 }

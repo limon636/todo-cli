@@ -19,6 +19,8 @@ No database needed. Just the `todo` command!
 - ✅ `todo list -t` → Show today's tasks only
 - ✅ `todo done 1` → Toggle task completion
 - ✅ `todo delete 2` → Delete task
+- ✅ `todo remove` → Remove all tasks from today (with confirmation)
+- ✅ `todo remove 7` → Remove all tasks from next week
 - ✅ `todo edit 1 "new text"` → Edit task
 - ✅ `todo due 1 "2025-12-31"` → Set due date
 - ✅ `todo search "keyword"` → Search tasks
@@ -84,6 +86,15 @@ todo done 1
 # Delete task
 todo delete 1
 
+# Remove all previous tasks up to today (with confirmation)
+todo remove
+
+# Remove all tasks up to yesterday
+todo remove 1
+
+# Remove all tasks from last week
+todo remove 7
+
 # Edit task
 todo edit 1 "New text"
 
@@ -142,6 +153,15 @@ todo add "Overdue task" -- -2       # Due 2 days ago
 📋 Your Pending Tasks:
 1 [⬜] Learn Rust 📅 2025-11-08
 2 [⬜] Call client 📅 2025-11-09
+
+# Remove command with confirmation
+🗑️ Tasks to be removed from today (2025-11-08):
+  1 [⬜] Learn Rust
+  3 [✅] ~~Morning workout~~
+  5 [⬜] Team meeting
+
+❓ Do you want to remove all 3 task(s) from today (2025-11-08)? [y/N]: y
+✅ Successfully removed 3 task(s) from today (2025-11-08)!
 
 # All tasks (with -a flag) - undone first
 📋 Your Complete Task List:
@@ -273,8 +293,8 @@ src/
 
 ### 🛠 Developer? Contribute!
 ```bash
-git clone https://github.com/YOUR_USERNAME/todo.git
-cd todo
+git clone https://github.com/limon636/todo-cli.git
+cd todo-cli
 cargo run -- add "New feature"
 ```
 

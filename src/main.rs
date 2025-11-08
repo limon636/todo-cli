@@ -16,6 +16,8 @@ fn main() {
         Commands::List { all, today } => list_tasks(all, today),
         Commands::Done { id } => toggle_task(id),
         Commands::Delete { id } => delete_task(id),
+        Commands::Remove { days } => remove_tasks_by_date(days),
+        Commands::Removed => show_removed_tasks(),
         Commands::Edit { id, text } => edit_task(id, text),
         Commands::Due { id, date } => set_due_date(id, date),
         Commands::Sync => sync_tasks(),

@@ -30,6 +30,14 @@ pub enum Commands {
     Done { id: u32 },
     /// Delete a task
     Delete { id: u32 },
+    /// Remove all tasks from a specific date
+    Remove {
+        /// Days ago from today (default: 0 = today)
+        #[arg(default_value = "0")]
+        days: i32,
+    },
+    /// Show removed tasks
+    Removed,
     /// Edit a task
     Edit { id: u32, text: String },
     /// Set due date for a task
